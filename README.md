@@ -32,14 +32,15 @@ For now, there is no native solution to send alarm via webhook from Zabbix to N8
 
 First, we need to create new Media type in Zabbix, to do this, go to Alerts -> Media types
 
-![image](https://github.com/user-attachments/assets/bd189091-87f2-4cd6-b2eb-77cc05793393)
+![image](https://github.com/user-attachments/assets/25be0cda-8016-4fb2-b3ef-11727e84336f)
+
 
 then, Create media type 
 ![image](https://github.com/user-attachments/assets/e4f164f8-b03d-44bc-aa84-da26b8c9997a)
 
 Provide all necessary information for new webhook:
 
-![image](https://github.com/user-attachments/assets/f6d23a95-5294-49fa-9573-90a52a921e5c)
+![image](https://github.com/user-attachments/assets/ebc96f22-0fd8-45ee-b941-73208233cbf3)
 
 |Name|N8N|
 |:---:|:---:|
@@ -116,7 +117,7 @@ For message template you can use default message template from Zabbix.
 
 Now, create Trigger action to execute webhook for N8N, go to Alerts -> Actions -> Trigger actions
 
-![image](https://github.com/user-attachments/assets/67f33f71-a685-4c94-a955-1d86ecf3cb2d)
+![image](https://github.com/user-attachments/assets/69489fde-2bed-487e-b131-984526e58b4a)
 
 Create new action and fill up necessary fields.
 
