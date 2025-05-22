@@ -1,4 +1,31 @@
 
+# N8N Agent AI with Zabbix
+
+
+
+asd
+# Prerequisites
+In my scenario I will use two LXC containers, one for the Zabbix Server 7.0 and the other for the N8N instance, you can use the docker solution if you prefer
+
+## LXC - N8N
+By default N8N creates a webhook with a localhost address, we need to change this if we want to send any webhook to N8N. 
+
+
+Edit N8N service configuration file
+
+```bash
+  /etc/systemd/system/n8n.service
+```
+
+and in the [service] section add environment with webhook
+```bash
+  Environment="WEBHOOK_URL=http://<n8n-address>:5678"
+```
+Then reload systemctl daemon and restart the n8n service
+```bash
+  systemctl daemon-reload
+  systemctl restart n8n.service
+```
 ## Zabbix Server
 
 For now, there is no native solution to send alarm via webhook from Zabbix to N8N, so we need to do it by yourself.
