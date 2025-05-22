@@ -197,7 +197,7 @@ This section describes an example N8N workflow that receives Zabbix alerts, proc
     * This node allows you to extract and rename fields from the incoming JSON payload from Zabbix for easier use in subsequent nodes.
     * Map the fields received from Zabbix (e.g., `body.zabbix_event_id`, `body.host`, `body.trigger`) to more user-friendly names if desired (e.g., `eventId`, `hostname`, `triggerName`). The exact path will depend on how the Webhook node structures the incoming data (usually under `body`).
 
-    ![N8N Edit Fields Node: Extracting Zabbix data](https://github.com/user-attachments/assets/d315900f-44de-49e8-ae11-9795a47aa3f5)
+    ![N8N Edit Fields Node: Extracting Zabbix data](![image](https://github.com/user-attachments/assets/ec5156dc-1397-44f8-a422-31f14edcdad2)
 
 3.  **AI Agent Node (e.g., Gemini, OpenAI, Anthropic Claude, etc.):**
     * This node sends the alert information to your chosen AI model.
