@@ -1,168 +1,246 @@
+## N8N AI Agent for Zabbix Alert Enrichment and Initial Triage
 
-# N8N AI Agent with Zabbix
+This project outlines a solution to empower Level 1 (L1) and Level 2 (L2) support teams to perform initial diagnostics and basic verification of Zabbix alerts using an AI-powered N8N workflow. The primary goal is to reduce the immediate involvement of Level 3 (L3) teams by providing enriched alert information and suggested troubleshooting steps.
 
+**Important Security Consideration:** Before implementing this project, verify your company's policy regarding the transmission of potentially sensitive data (e.g., hostnames, IP addresses, tags, proxy names) to external AI services. If necessary, implement data anonymization techniques or explore the possibility of using an on-premise or private AI solution. Consult your security team for guidance.
 
-The intention of the project is help L1/L2 team to identify and do the basic verification of the existing problem without involving L3 team.
-Before you start implemention of this project, make sure your company allow you to send privacy data you to AI, if not try, to anonymize data like hostname, ip address, tags, proxy name - ask security team, you also can use your own AI if you own.
+## Guiding Principles for AI Agent Interaction
 
-Few tips for AI agent:
-- Write AI role.
-- What he does in IT team.
-- Behavior rules.
-- Example Output and suggested solution.
-- Provide the most information as you can.
-- Determine in message what problem do you have and what do you want receive.
+To ensure effective and consistent responses from the AI agent, consider the following when designing your prompts:
+
+* **Define the AI's Role:** Clearly state what the AI's persona is (e.g., "You are an expert IT operations assistant").
+* **Specify its Function:** Describe what the AI does within the IT team (e.g., "Your role is to analyze Zabbix alerts, provide context, and suggest initial troubleshooting steps").
+* **Establish Behavior Rules:** Set guidelines for the AI's responses (e.g., "Provide concise, actionable information. Always maintain a professional and helpful tone.").
+* **Provide Example Output:** Show the AI the desired format and content for its responses, including suggested solutions.
+* **Maximize Information Input:** Supply the AI with as much relevant data from the Zabbix alert as possible.
+* **Clearly State the Problem:** Ensure the prompt clearly communicates the nature of the alert and the desired output from the AI.
 
 # Prerequisites
-In my scenario I will use two LXC containers, one for the Zabbix Server 7.0 and the other for the N8N instance. You can use an existisng scripts for Proxmox LXC to install Zabbix Server and N8N instances.
 
-https://github.com/community-scripts/ProxmoxVE
+This guide assumes a setup using two LXC containers: one for the Zabbix Server (version 7.0 in this example) and another for the N8N instance.
 
-## N8N configuration
-By default N8N creates a webhook with a localhost address, we need to change this if we want to send any webhook to N8N. 
+You can leverage existing community scripts for Proxmox to simplify the installation of Zabbix Server and N8N in LXC containers:
+* [ProxmoxVE Community Scripts](https://github.com/community-scripts/ProxmoxVE)
 
+## N8N Instance Configuration: Enabling External Webhook Access
 
-Edit N8N service configuration file
+By default, N8N generates webhook URLs that are only accessible from `localhost`. To allow Zabbix to send alerts to N8N, you need to configure N8N to use an externally accessible webhook URL.
 
-```bash
-  /etc/systemd/system/n8n.service
-```
+1.  **Edit the N8N Service Configuration File:**
+    Open the N8N service file using a text editor (e.g., `nano` or `vim`):
+    ```bash
+    sudo vim /etc/systemd/system/n8n.service
+    ```
 
-and in the [service] section add environment with webhook
-```bash
-  Environment="WEBHOOK_URL=http://<n8n-address>:5678"
-```
-Then reload systemctl daemon and restart the n8n service
-```bash
-  systemctl daemon-reload
-  systemctl restart n8n.service
-```
-## Zabbix Server
+2.  **Set the `WEBHOOK_URL` Environment Variable:**
+    In the `[Service]` section of the file, add the following line. Replace `<n8n-external-ip-or-hostname>` with the actual IP address or hostname of your N8N instance and `<port>` with the N8N port (typically `5678`):
+    ```bash
+    Environment="WEBHOOK_URL=http://<n8n-external-ip-or-hostname>:<port>"
+    ```
+    **Example:**
+    ```bash
+    Environment="WEBHOOK_URL=http://192.168.1.100:5678"
+    ```
 
-For now, there is no native solution to send alarm via webhook from Zabbix to N8N, so we need to do it by yourself.
+3.  **Reload Systemd and Restart N8N:**
+    Apply the changes and restart the N8N service:
+    ```bash
+    sudo systemctl daemon-reload
+    sudo systemctl restart n8n.service
+    ```
 
-First, we need to create new Media type in Zabbix, to do this, go to Alerts -> Media types
+## Zabbix Server Configuration: Creating a Webhook Media Type for N8N
 
-![image](https://github.com/user-attachments/assets/25be0cda-8016-4fb2-b3ef-11727e84336f)
+Zabbix does not have a native integration for sending alerts to N8N via webhooks. Therefore, we need to create a custom Media Type.
 
+1.  **Navigate to Media Types:**
+    In the Zabbix frontend, go to **Alerts** -> **Media types**.
 
-then, Create media type 
-![image](https://github.com/user-attachments/assets/e4f164f8-b03d-44bc-aa84-da26b8c9997a)
+    ![Zabbix Menu: Alerts -> Media types](https://github.com/user-attachments/assets/25be0cda-8016-4fb2-b3ef-11727e84336f)
 
-Provide all necessary information for new webhook:
+2.  **Create a New Media Type:**
+    Click the "**Create media type**" button.
 
-![image](https://github.com/user-attachments/assets/ebc96f22-0fd8-45ee-b941-73208233cbf3)
+    ![Zabbix: Create media type button](https://github.com/user-attachments/assets/e4f164f8-b03d-44bc-aa84-da26b8c9997a)
 
-|Name|N8N|
-|:---:|:---:|
+3.  **Configure the Webhook Media Type:**
+    Fill in the following details for the new N8N webhook:
 
-|Type |Webhook|
-|--- | ---|
+    ![Zabbix: Media type configuration for N8N](https://github.com/user-attachments/assets/ebc96f22-0fd8-45ee-b941-73208233cbf3)
 
-| Name     | Value      |
-| :---:| :---:      |
-| EVENTID        |{EVENT.ID}|
-| EVENT_DATE     |{EVENT.DATE}|
-| EVENT_TIME     |{EVENT.TIME}|
-| HOSTNAME     |{HOST.NAME}|
-| ITEM_KEY     |{ITEM.KEY}|
-| ITEM_VALUE     |{ITEM.VALUE}|
-| PROBLEM_URL     |http://\<zabbix-address>/tr_events.php?triggerid={TRIGGER.ID}&eventid={EVENT.ID}|
-| TRIGGER_NAME     |{TRIGGER.NAME}|
-| TRIGGER_SEVERITY     |{TRIGGER.SEVERITY}|
-| TRIGGER_STATUS     |{TRIGGER.STATUS}|
+    * **Name:** `N8N` (or a descriptive name of your choice)
+    * **Type:** `Webhook`
+    * **Parameters:** Define the following parameters that will be sent in the webhook payload. Zabbix macros will populate these values dynamically.
 
+        | Parameter Name     | Value                                                                  | Description                                       |
+        | :----------------- | :--------------------------------------------------------------------- | :------------------------------------------------ |
+        | `EVENTID`          | `{EVENT.ID}`                                                           | The unique ID of the event.                       |
+        | `EVENT_DATE`       | `{EVENT.DATE}`                                                         | The date the event occurred.                      |
+        | `EVENT_TIME`       | `{EVENT.TIME}`                                                         | The time the event occurred.                      |
+        | `HOSTNAME`         | `{HOST.NAME}`                                                          | The name of the host that triggered the event.    |
+        | `ITEM_KEY`         | `{ITEM.KEY}`                                                           | The key of the item that triggered the event.     |
+        | `ITEM_VALUE`       | `{ITEM.VALUE}`                                                         | The value of the item that triggered the event.   |
+        | `PROBLEM_URL`      | `http://<zabbix-server-address>/tr_events.php?triggerid={TRIGGER.ID}&eventid={EVENT.ID}` | A direct URL to the event in Zabbix. **Replace `<zabbix-server-address>` with your Zabbix server's address.** |
+        | `TRIGGER_NAME`     | `{TRIGGER.NAME}`                                                       | The name of the trigger.                          |
+        | `TRIGGER_SEVERITY` | `{TRIGGER.SEVERITY}`                                                   | The severity of the trigger.                      |
+        | `TRIGGER_STATUS`   | `{TRIGGER.STATUS}`                                                     | The status of the trigger (PROBLEM or OK).       |
 
-Script:
+    * **Script:**
+        Paste the following JavaScript code into the script field. This script constructs the JSON payload and sends it to your N8N webhook URL.
 
-```javascript
-  try {
-    Zabbix.Log(4, '[n8n Webhook] Received parameters: ' + value);
-    var n8nWebhookUrl = '<N8N-webhook-address>';
-    var params = JSON.parse(value);
+        **Important:** Replace `<N8N-webhook-address>` in the script with the actual production webhook URL you obtain from your N8N workflow (see N8N Configuration section below).
 
-    var payload = {
-        zabbix_event_id: params.EVENTID || 'N/A',
-        host: params.HOSTNAME || 'N/A',
-        trigger: params.TRIGGER_NAME || params.SUBJECT || 'N/A',
-        severity: params.TRIGGER_SEVERITY || 'N/A',
-        status: params.TRIGGER_STATUS || 'N/A',
-        event_time: params.EVENT_TIME || 'N/A',
-        event_date: params.EVENT_DATE || 'N/A',
-		item_key: params.ITEM_KEY || 'N/A',
-        item_value: params.ITEM_VALUE || 'N/A',
-        problem_url: params.PROBLEM_URL || ''
-    };
+        ```javascript
+        try {
+            Zabbix.Log(4, '[N8N Webhook] Received parameters: ' + value);
 
-    Zabbix.Log(4, '[n8n Webhook] Payload to send: ' + JSON.stringify(payload));
+            // **IMPORTANT:** Replace with your N8N Production Webhook URL
+            var n8nWebhookUrl = '<N8N-webhook-address>';
+            var params = JSON.parse(value);
 
-    var request = new HttpRequest();
-    request.addHeader('Content-Type: application/json');
-    var response = request.post(n8nWebhookUrl, JSON.stringify(payload));
+            var payload = {
+                zabbix_event_id: params.EVENTID || 'N/A',
+                host: params.HOSTNAME || 'N/A',
+                trigger: params.TRIGGER_NAME || params.SUBJECT || 'N/A', // params.SUBJECT can be a fallback
+                severity: params.TRIGGER_SEVERITY || 'N/A',
+                status: params.TRIGGER_STATUS || 'N/A',
+                event_time: params.EVENT_TIME || 'N/A',
+                event_date: params.EVENT_DATE || 'N/A',
+                item_key: params.ITEM_KEY || 'N/A',
+                item_value: params.ITEM_VALUE || 'N/A',
+                problem_url: params.PROBLEM_URL || ''
+            };
 
-    Zabbix.Log(4, '[n8n Webhook] Response received: ' + response);
+            Zabbix.Log(4, '[N8N Webhook] Payload to send: ' + JSON.stringify(payload));
 
-    if (request.getStatus() >= 200 && request.getStatus() < 300) {
-        Zabbix.Log(4, '[n8n Webhook] Successfully sent data to n8n. Status: ' + request.getStatus());
-        return JSON.stringify({
-            status: 'success',
-            http_status: request.getStatus(),
-            response: response
-        });
-    } else {
-        Zabbix.Log(1, '[n8n Webhook] Failed to send data to n8n. Status: ' + request.getStatus() + ' Response: ' + response);
-        throw 'Failed to send data to n8n. HTTP Status: ' + request.getStatus() + ' Response: ' + response;
-    }
+            var request = new HttpRequest();
+            request.addHeader('Content-Type: application/json');
 
-} catch (error) {
-    Zabbix.Log(1, '[n8n Webhook] Execution error: ' + error);
-    throw 'n8n webhook script execution failed: ' + error;
-}
-```
+            var response = request.post(n8nWebhookUrl, JSON.stringify(payload));
 
+            Zabbix.Log(4, '[N8N Webhook] Response received: ' + response);
 
+            if (request.getStatus() >= 200 && request.getStatus() < 300) {
+                Zabbix.Log(4, '[N8N Webhook] Successfully sent data to N8N. Status: ' + request.getStatus());
+                return JSON.stringify({
+                    status: 'success',
+                    http_status: request.getStatus(),
+                    response: response
+                });
+            } else {
+                Zabbix.Log(1, '[N8N Webhook] Failed to send data to N8N. Status: ' + request.getStatus() + ' Response: ' + response);
+                throw 'Failed to send data to N8N. HTTP Status: ' + request.getStatus() + ' Response: ' + response;
+            }
 
-For message template you can use default message template from Zabbix.
+        } catch (error) {
+            Zabbix.Log(1, '[N8N Webhook] Execution error: ' + error);
+            throw 'N8N webhook script execution failed: ' + error;
+        }
+        ```
 
-![image](https://github.com/user-attachments/assets/97ba03bd-5358-4c1d-963b-e000ea647f59)
+    * **Message Templates:**
+        You can typically use the default message template or customize it if needed. For this integration, the core data is sent via the script parameters.
 
-Now, create Trigger action to execute webhook for N8N, go to Alerts -> Actions -> Trigger actions
+        ![Zabbix: Media type message template](https://github.com/user-attachments/assets/97ba03bd-5358-4c1d-963b-e000ea647f59)
 
-![image](https://github.com/user-attachments/assets/69489fde-2bed-487e-b131-984526e58b4a)
+4.  **Save the Media Type.** Click "Add" or "Update" to save your new media type.
 
-Create new action and fill up necessary fields.
+## Zabbix Server Configuration: Creating a Trigger Action
 
-![image](https://github.com/user-attachments/assets/c239a809-522d-4d3a-975d-5ca9441a8273)
+Next, create a trigger action to specify when and how Zabbix should use the N8N media type.
 
-![image](https://github.com/user-attachments/assets/549388b1-d0c8-487f-ad1b-7d40017601d6)
+1.  **Navigate to Trigger Actions:**
+    Go to **Alerts** -> **Actions** -> **Trigger actions**.
 
+    ![Zabbix Menu: Alerts -> Actions -> Trigger actions](https://github.com/user-attachments/assets/69489fde-2bed-487e-b131-984526e58b4a)
 
-## N8N - Configuration
+2.  **Create a New Action:**
+    Click the "**Create action**" button in the top right corner.
 
-In my scenario, i will use Gemini as AI agent, Simple store and email notification. You can use each AI model which you prefer and store data on MongoDB/Postgres/redis etc. 
+3.  **Configure the Action - "Action" Tab:**
+    * **Name:** Provide a descriptive name (e.g., "Send Alert to N8N AI Agent").
+    * **Conditions:** Define the conditions under which this action will be triggered (e.g., specific trigger severities, host groups, problem status, etc.). A common condition is `Trigger severity >= "Warning"`.
+    * **Enabled:** Ensure the checkbox is checked.
 
-![image](https://github.com/user-attachments/assets/81b931a4-4660-42ff-956e-055eea551917)
+    ![Zabbix: Trigger action configuration - Action tab](https://github.com/user-attachments/assets/c239a809-522d-4d3a-975d-5ca9441a8273)
 
-Our URL webhook, which we need to provide in Zabbix script (it's for test, switch to "production URL" after test)
+4.  **Configure the Action - "Operations" Tab:**
+    * In the "Operations" block, click "**Add**".
+    * **Operation Details:**
+        * **Send to Users:** Select a Zabbix user that has the N8N Media Type configured in their user profile (under "Media").
+        * **Send to media type:** From the dropdown, choose the "N8N" media type you created.
+    * Click "**Add**" to save the operation.
 
-![image](https://github.com/user-attachments/assets/574b2799-09e3-46c9-9743-7b3807936676)
+    ![Zabbix: Trigger action configuration - Operations tab](https://github.com/user-attachments/assets/549388b1-d0c8-487f-ad1b-7d40017601d6)
 
-make sure, that http method is set to "POST"
+5.  **Save the Trigger Action.** Click "Add" or "Update" at the bottom of the page.
 
-In edit fields, we exctract important information for us. In my case i used these fields to futher process.
-![image](https://github.com/user-attachments/assets/d315900f-44de-49e8-ae11-9795a47aa3f5)
+## N8N Workflow Configuration
 
-In AI Agent define Prompt message based on INPUT information and System Mesages (rules,behavior etc for agent) and click "test step"
+This section describes an example N8N workflow that receives Zabbix alerts, processes them with an AI agent (Gemini in this example), stores information (optional), and sends an email notification. You can adapt this workflow to your specific needs and preferred tools.
 
-![image](https://github.com/user-attachments/assets/9645dbdc-1485-4903-8a55-1d397e3725bf)
+**Example Workflow Overview:**
 
-the last step is send response and all information about host to email address/ticket tool/discord etc.
+![N8N Workflow: Zabbix to AI to Email](https://github.com/user-attachments/assets/81b931a4-4660-42ff-956e-055eea551917)
 
-Configure your SMTP account and format your message
-![image](https://github.com/user-attachments/assets/4a1de0fe-bfb4-4b8f-bf4a-aa17081c9adf)
+1.  **Webhook Node (Trigger):**
+    * This node is the entry point for Zabbix alerts.
+    * **Webhook URLs:** N8N provides a **Test URL** and a **Production URL**.
+        * Use the **Test URL** for initial setup and testing your Zabbix media type script.
+        * **Crucially, once you've tested your Zabbix media type script and N8N workflow, update the `n8nWebhookUrl` variable in your Zabbix Media Type script to use the N8N Production URL.**
+    * **HTTP Method:** Ensure this is set to `POST`.
+    * **Authentication:** Set to `None` if your Zabbix script doesn't send authentication headers (as in the example).
 
-Example solution
-![image](https://github.com/user-attachments/assets/2219b286-d2a4-4c33-b2b8-bb16ff4ab09b)
+    ![N8N Webhook Node: Test and Production URLs](https://github.com/user-attachments/assets/574b2799-09e3-46c9-9743-7b3807936676)
 
+2.  **Edit Fields Node (Optional but Recommended):**
+    * This node allows you to extract and rename fields from the incoming JSON payload from Zabbix for easier use in subsequent nodes.
+    * Map the fields received from Zabbix (e.g., `body.zabbix_event_id`, `body.host`, `body.trigger`) to more user-friendly names if desired (e.g., `eventId`, `hostname`, `triggerName`). The exact path will depend on how the Webhook node structures the incoming data (usually under `body`).
 
-	
+    ![N8N Edit Fields Node: Extracting Zabbix data](https://github.com/user-attachments/assets/d315900f-44de-49e8-ae11-9795a47aa3f5)
+
+3.  **AI Agent Node (e.g., Gemini, OpenAI, Anthropic Claude, etc.):**
+    * This node sends the alert information to your chosen AI model.
+    * **Prompt Design:**
+        * **System Message (or equivalent field in the AI node):** Define the AI's role, behavior, and any overarching rules (as discussed in "Guiding Principles for AI Agent Interaction").
+        * **User Message (Prompt):** Construct a prompt using the data extracted from the Zabbix alert (e.g., from the "Edit Fields" node or directly from the Webhook node's output). Ask the AI to analyze the alert and provide insights or troubleshooting steps.
+        * **Example Prompt Structure (using N8N expressions):**
+            ```text
+            You are an L1 IT Support Agent. Analyze the following Zabbix alert and provide a brief summary of the problem, potential causes, and 2-3 basic troubleshooting steps.
+
+            Alert Details:
+            Host: {{ $json.host }}
+            Trigger: {{ $json.trigger }}
+            Severity: {{ $json.severity }}
+            Item Value: {{ $json.item_value }}
+            Item Key: {{ $json.item_key }}
+            Event Time: {{ $json.event_time }}
+            Zabbix Event Link: {{ $json.problem_url }}
+
+            Suggest concrete actions the L1 team can take.
+            Return your response in a clear, easy-to-read format.
+            ```
+    * **Test Step:** Use the "Test step" or "Execute Node" functionality in N8N to verify the AI's response based on sample data from the previous node.
+
+    ![N8N AI Agent Node: Prompt configuration](https://github.com/user-attachments/assets/9645dbdc-1485-4903-8a55-1d397e3725bf)
+
+4.  **Data Store Node (Optional, e.g., Simple Store, Google Sheets, Database Node):**
+    * Use this node to log the alert, the AI's response, and any other relevant information for auditing, reporting, or future analysis.
+    * In the example image, "Simple Store" is used. You could integrate with nodes for MongoDB, PostgreSQL, Redis, Google Sheets, etc.
+
+5.  **Notification Node (e.g., Email, Slack, Microsoft Teams, Discord):**
+    * This node sends the enriched alert information (including the AI's suggestions) to the appropriate team or communication channel.
+    * **Configure SMTP/Integration:** Set up your email account (SMTP), or authenticate with the API for services like Slack or Teams.
+    * **Format Message:** Create a clear and informative message body using data from previous nodes (Zabbix alert details and the AI's response). Use N8N expressions to insert dynamic content.
+
+    ![N8N Email Node: Message configuration](https://github.com/user-attachments/assets/4a1de0fe-bfb4-4b8f-bf4a-aa17081c9adf)
+
+**Example Output (Email/Notification):**
+
+This is an example of what the final notification might look like, combining Zabbix alert data with the AI's analysis and suggestions.
+
+![Example Email Notification with AI analysis](https://github.com/user-attachments/assets/2219b286-d2a4-4c33-b2b8-bb16ff4ab09b)
+
+## Conclusion
+
+By integrating Zabbix with an N8N AI-powered workflow, you can significantly enhance your IT operations team's ability to respond to alerts. This solution provides valuable context and initial troubleshooting steps, enabling L1/L2 teams to resolve more issues independently and reducing the burden on L3 support.
