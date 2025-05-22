@@ -1,29 +1,3 @@
-# N8N Agent AI with Zabbix
-
-<test opis>
-
-# Prerequisites
-In my scenario I will use two LXC containers, one for the Zabbix Server 7.0 and the other for the N8N instance, you can use the docker solution if you prefer
-
-## LXC - N8N
-By default N8N creates a webhook with a localhost address, we need to change this if we want to send any webhook to N8N. 
-
-Edit N8N service configuration file
-
-```bash
-  /etc/systemd/system/n8n.service
-```
-
-and in the [service] section add environment with webhook
-```bash
-  Environment="WEBHOOK_URL=http://<n8n-address>:5678"
-```
-Then reload systemctl daemon and restart the n8n service
-```bash
-  systemctl daemon-reload
-  systemctl restart n8n.service
-```
-
 
 ## Zabbix Server
 
@@ -38,9 +12,11 @@ then, Create media type
 
 Provide all necessary information for new webhook:
 
-Name:
+|Name|N8N|
+|--- | ---|
 
-Type:
+|Type |Webhook|
+|--- | ---|
 
 | Name     | Value      |
 | ---      | ---       |
@@ -50,8 +26,7 @@ Type:
 | HOSTNAME     |{HOST.NAME}|
 | ITEM_KEY     |{ITEM.KEY}|
 | ITEM_VALUE     |{ITEM.VALUE}|
-| MESSAGE     |{TRIGGER.NAME}|
-| PROBLEM_URL     |http://<zabbix>/tr_events.php?triggerid={TRIGGER.ID}&eventid={EVENT.ID}|
+| PROBLEM_URL     |http://\<zabbix-address>/tr_events.php?triggerid={TRIGGER.ID}&eventid={EVENT.ID}|
 | TRIGGER_NAME     |{TRIGGER.NAME}|
 | TRIGGER_SEVERITY     |{TRIGGER.SEVERITY}|
 | TRIGGER_STATUS     |{TRIGGER.STATUS}|
@@ -71,10 +46,9 @@ Script:
         trigger: params.TRIGGER_NAME || params.SUBJECT || 'N/A',
         severity: params.TRIGGER_SEVERITY || 'N/A',
         status: params.TRIGGER_STATUS || 'N/A',
-        message: params.MESSAGE || 'N/A',
         event_time: params.EVENT_TIME || 'N/A',
         event_date: params.EVENT_DATE || 'N/A',
-		    item_key: params.ITEM_KEY || 'N/A',
+		item_key: params.ITEM_KEY || 'N/A',
         item_value: params.ITEM_VALUE || 'N/A',
         problem_url: params.PROBLEM_URL || ''
     };
@@ -105,3 +79,8 @@ Script:
 }
 ```
 
+![image](https://github.com/user-attachments/assets/f6d23a95-5294-49fa-9573-90a52a921e5c)
+
+For message template you can use default message template from Zabbix.
+
+![image](https://github.com/user-attachments/assets/97ba03bd-5358-4c1d-963b-e000ea647f59)
