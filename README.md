@@ -125,4 +125,19 @@ Create new action and fill up necessary fields.
 ![image](https://github.com/user-attachments/assets/549388b1-d0c8-487f-ad1b-7d40017601d6)
 
 
+## N8N - Configuration
+
+In my scenario, i will use Gemini as AI agent, Simple store and email notification. You can use each AI model which you prefer and store data on MongoDB/Postgres/redis etc. 
+
+![image](https://github.com/user-attachments/assets/81b931a4-4660-42ff-956e-055eea551917)
+
+Our URL webhook, which we need to provide in Zabbix script (it's for test, switch to "production URL" after test)
+
+![image](https://github.com/user-attachments/assets/574b2799-09e3-46c9-9743-7b3807936676)
+
+make sure, that http method is set to "POST"
+
+In edit fields, we get excract import information for us. In my case i used this field to futher process.
+![image](https://github.com/user-attachments/assets/d315900f-44de-49e8-ae11-9795a47aa3f5)
+
 
