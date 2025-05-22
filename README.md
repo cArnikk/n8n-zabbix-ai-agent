@@ -137,7 +137,7 @@ Our URL webhook, which we need to provide in Zabbix script (it's for test, switc
 
 make sure, that http method is set to "POST"
 
-In edit fields, we get excract import information for us. In my case i used this field to futher process.
+In edit fields, we get excract import information for us. In my case i used these fields to futher process.
 ![image](https://github.com/user-attachments/assets/d315900f-44de-49e8-ae11-9795a47aa3f5)
 
 
