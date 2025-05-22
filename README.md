@@ -138,7 +138,20 @@ Our URL webhook, which we need to provide in Zabbix script (it's for test, switc
 
 make sure, that http method is set to "POST"
 
-In edit fields, we get excract import information for us. In my case i used these fields to futher process.
+In edit fields, we exctract important information for us. In my case i used these fields to futher process.
 ![image](https://github.com/user-attachments/assets/d315900f-44de-49e8-ae11-9795a47aa3f5)
 
+In AI Agent define Prompt message based on INPUT information and System Mesages (rules,behavior etc for agent) and click "test step"
 
+![image](https://github.com/user-attachments/assets/9645dbdc-1485-4903-8a55-1d397e3725bf)
+
+the last step is send response and all information about host to email address/ticket tool/discord etc.
+
+Configure your SMTP account and format your message
+![image](https://github.com/user-attachments/assets/4a1de0fe-bfb4-4b8f-bf4a-aa17081c9adf)
+
+Example solution
+![image](https://github.com/user-attachments/assets/2219b286-d2a4-4c33-b2b8-bb16ff4ab09b)
+
+
+	
