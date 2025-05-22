@@ -114,5 +114,15 @@ For message template you can use default message template from Zabbix.
 
 ![image](https://github.com/user-attachments/assets/97ba03bd-5358-4c1d-963b-e000ea647f59)
 
-Now, create Trigger action to execute webhook for N8N
+Now, create Trigger action to execute webhook for N8N, go to Alerts -> Actions -> Trigger actions
+
+![image](https://github.com/user-attachments/assets/67f33f71-a685-4c94-a955-1d86ecf3cb2d)
+
+Create new action and fill up necessary fields.
+
+![image](https://github.com/user-attachments/assets/c239a809-522d-4d3a-975d-5ca9441a8273)
+
+![image](https://github.com/user-attachments/assets/549388b1-d0c8-487f-ad1b-7d40017601d6)
+
+
 
