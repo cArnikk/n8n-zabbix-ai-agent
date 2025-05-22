@@ -111,3 +111,6 @@ Script:
 For message template you can use default message template from Zabbix.
 
 ![image](https://github.com/user-attachments/assets/97ba03bd-5358-4c1d-963b-e000ea647f59)
+
+Now, create Trigger action to execute webhook for N8N
+
