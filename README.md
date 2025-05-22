@@ -39,14 +39,16 @@ then, Create media type
 
 Provide all necessary information for new webhook:
 
+![image](https://github.com/user-attachments/assets/f6d23a95-5294-49fa-9573-90a52a921e5c)
+
 |Name|N8N|
-|--- | ---|
+|:---:|:---:|
 
 |Type |Webhook|
 |--- | ---|
 
 | Name     | Value      |
-| ---      | ---       |
+| :---:| :---:      |
 | EVENTID        |{EVENT.ID}|
 | EVENT_DATE     |{EVENT.DATE}|
 | EVENT_TIME     |{EVENT.TIME}|
@@ -106,7 +108,7 @@ Script:
 }
 ```
 
-![image](https://github.com/user-attachments/assets/f6d23a95-5294-49fa-9573-90a52a921e5c)
+
 
 For message template you can use default message template from Zabbix.
 
