@@ -1,13 +1,24 @@
 
-# N8N Agent AI with Zabbix
+# N8N AI Agent with Zabbix
 
 
+The intention of the project is help L1/L2 team to identify and do the basic verification of the existing problem without involving L3 team.
+Before you start implemention of this project, make sure your company allow you to send privacy data you to AI, if not try, to anonymize data like hostname, ip address, tags, proxy name - ask security team, you also can use your own AI if you own.
 
-asd
+Few tips for AI agent:
+- Write AI role.
+- What he does in IT team.
+- Behavior rules.
+- Example Output and suggested solution.
+- Provide the most information as you can.
+- Determine in message what problem do you have and what do you want receive.
+
 # Prerequisites
-In my scenario I will use two LXC containers, one for the Zabbix Server 7.0 and the other for the N8N instance, you can use the docker solution if you prefer
+In my scenario I will use two LXC containers, one for the Zabbix Server 7.0 and the other for the N8N instance. You can use an existisng scripts for Proxmox LXC to install Zabbix Server and N8N instances.
 
-## LXC - N8N
+https://github.com/community-scripts/ProxmoxVE
+
+## N8N configuration
 By default N8N creates a webhook with a localhost address, we need to change this if we want to send any webhook to N8N. 
 
 
